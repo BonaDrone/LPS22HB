@@ -1,132 +1,92 @@
-/* 09/23/2017 Copyright Tlera Corporation
+/* 
+   LPS22HB.h: Header file for LPS22HB class
 
-   Created by Kris Winer
+   Copyright (C) 2018 Simon D. Levy
 
-   This sketch uses SDA/SCL on pins 21/20 (Butterfly default), respectively, and it uses the Butterfly STM32L433CU Breakout Board.
-   The LPS22HB is a low power barometerr.
+   Adapted from https://github.com/kriswiner/LPS22HB_LPS22HB_LPS22HB
 
-   Library may be used freely and without limit with attribution.
+   This file is part of LPS22HB.
 
+   LPS22HB is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   LPS22HB is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+   You should have received a copy of the GNU General Public License
+   along with LPS22HB.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "_LPS22HB.h"
-#include "Wire.h"
+#include "LPS22HB.h"
 
-LPS22H::LPS22H(uint8_t intPin)
+#include <CrossPlatformI2C_Core.h>
+
+LPS22HB::LPS22HB(Rate_t rate)
 {
-    pinMode(intPin, INPUT);
-    _intPin = intPin; 
+    _rate = rate;
 }
 
-uint8_t LPS22H::getChipID()
+bool LPS22HB::begin(void)
 {
-    // Read the WHO_AM_I register of the altimeter this is a good test of communication
-    uint8_t temp = readByte(LPS22H_ADDRESS, LPS22H_WHOAMI);  // Read WHO_AM_I register for LPS22H
-    return temp;
-}
+    _i2c = cpi2c_open(ADDRESS);
 
-uint8_t LPS22H::status()
-{
-    // Read the status register of the altimeter  
-    uint8_t temp = readByte(LPS22H_ADDRESS, LPS22H_STATUS);   
-    return temp;
-}
+    if (_i2c <= 0) {
+        return false;
+    }
 
-int32_t LPS22H::readAltimeterPressure()
-{
-    uint8_t rawData[3];  // 24-bit pressure register data stored here
-    readBytes(LPS22H_ADDRESS, (LPS22H_PRESS_OUT_XL | 0x80), 3, &rawData[0]); // bit 7 must be one to read multiple bytes
-    return (int32_t) ((int32_t) rawData[2] << 16 | (int32_t) rawData[1] << 8 | rawData[0]);
-}
+    delay(100);
 
-int16_t LPS22H::readAltimeterTemperature()
-{
-    uint8_t rawData[2];  // 16-bit pressure register data stored here
-    readBytes(LPS22H_ADDRESS, (LPS22H_TEMP_OUT_L | 0x80), 2, &rawData[0]); // bit 7 must be one to read multiple bytes
-    return (int16_t)((int16_t) rawData[1] << 8 | rawData[0]);
-}
+    if (readRegister(WHO_AM_I) != ID) {
+        return false;
+    }
 
+    delay(100); 
 
-void LPS22H::Init(uint8_t PODR)
-{
     // set sample rate by setting bits 6:4 
     // enable low-pass filter by setting bit 3 to one
     // bit 2 == 0 means bandwidth is odr/9, bit 2 == 1 means bandwidth is odr/20
     // make sure data not updated during read by setting block data udate (bit 1) to 1
-    writeByte(LPS22H_ADDRESS, LPS22H_CTRL_REG1, PODR << 4 | 0x08 | 0x02);  
-    writeByte(LPS22H_ADDRESS, LPS22H_CTRL_REG3, 0x04);  // enable data ready as interrupt source
+    writeRegister(CTRL_REG1, _rate << 4 | 0x08 | 0x02);  
+    writeRegister(CTRL_REG3, 0x04);  // enable data ready as interrupt source
+
+    return true;
 }
 
-// I2C scan function
-void LPS22H::I2Cscan()
+bool LPS22HB::checkNewData(void)
 {
-    // scan for i2c devices
-    byte error, address;
-    int nDevices;
-
-    Serial.println("Scanning...");
-
-    nDevices = 0;
-    for(address = 1; address < 127; address++ ) 
-    {
-        // The i2c_scanner uses the return value of
-        // the Write.endTransmission to see if
-        // a device did acknowledge to the address.
-        Wire.beginTransmission(address);
-        error = Wire.endTransmission();
-
-
-        if (error == 0)
-        {
-            Serial.print("I2C device found at address 0x");
-            if (address<16) 
-                Serial.print("0");
-            Serial.print(address,HEX);
-            Serial.println("  !");
-
-            nDevices++;
-        }
-        else if (error==4) 
-        {
-            Serial.print("Unknown error at address 0x");
-            if (address<16) 
-                Serial.print("0");
-            Serial.println(address,HEX);
-        }    
-    }
-    if (nDevices == 0)
-        Serial.println("No I2C devices found\n");
-    else
-        Serial.println("done\n");
-
+    return (bool)readRegister(STATUS);   
 }
 
-void LPS22H::writeByte(uint8_t address, uint8_t subAddress, uint8_t data)
+float LPS22HB::readPressure(void)
 {
-    Wire.beginTransmission(address);  // Initialize the Tx buffer
-    Wire.write(subAddress);           // Put slave register address in Tx buffer
-    Wire.write(data);                 // Put data in Tx buffer
-    Wire.endTransmission();           // Send the Tx buffer
+    uint8_t data[3];  // 24-bit pressure register data stored here
+    readRegisters((PRESS_OUT_XL | 0x80), 3, data); // bit 7 must be one to read multiple bytes
+    return ((int32_t) data[2] << 16 | (int32_t) data[1] << 8 | data[0]) / 4096.0f;
 }
 
-uint8_t LPS22H::readByte(uint8_t address, uint8_t subAddress)
+float LPS22HB::readTemperature(void)
 {
-    uint8_t data; // `data` will store the register data   
-    Wire.beginTransmission(address);         // Initialize the Tx buffer
-    Wire.write(subAddress);                  // Put slave register address in Tx buffer
-    Wire.endTransmission(false);             // Send the Tx buffer, but send a restart to keep connection alive
-    Wire.requestFrom(address, (size_t) 1);  // Read one uint8_t from slave register address 
-    data = Wire.read();                      // Fill Rx buffer with result
-    return data;                             // Return data read from slave register
+    uint8_t data[2];  // 16-bit pressure register data stored here
+    readRegisters((TEMP_OUT_L | 0x80), 2, data); // bit 7 must be one to read multiple bytes
+    return ((int16_t) data[1] << 8 | data[0]) / 100.f;
 }
 
-void LPS22H::readBytes(uint8_t address, uint8_t subAddress, uint8_t count, uint8_t * dest)
-{  
-    Wire.beginTransmission(address);   // Initialize the Tx buffer
-    Wire.write(subAddress);            // Put slave register address in Tx buffer
-    Wire.endTransmission(false);       // Send the Tx buffer, but send a restart to keep connection alive
-    uint8_t i = 0;
-    Wire.requestFrom(address, (size_t)count);  // Read bytes from slave register address 
-    while (Wire.available()) {
-        dest[i++] = Wire.read(); }         // Put read results in the Rx buffer
+uint8_t LPS22HB::readRegister(uint8_t subAddress)
+{
+    uint8_t data=0;
+    readRegisters(subAddress, 1, &data);
+    return data;
+}
+
+void LPS22HB::readRegisters(uint8_t subAddress, uint8_t count, uint8_t * dest)
+{
+    cpi2c_readRegisters(_i2c, subAddress, count, dest);
+}
+
+void LPS22HB::writeRegister(uint8_t subAddress, uint8_t data)
+{
+    cpi2c_writeRegister(_i2c, subAddress, data);
 }
