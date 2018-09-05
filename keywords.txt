@@ -1,0 +1,4 @@
+LPS22HB	KEYWORD1
+begin	KEYWORD2
+checkNewData	KEYWORD2
+readData    KEYWORD2
