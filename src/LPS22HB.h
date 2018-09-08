@@ -22,6 +22,9 @@
 
 #pragma once
 
+#include <stdint.h>
+#include <stdbool.h>
+
 // One ifdef needed to support delay() cross-platform
 #if defined(ARDUINO)
 #include <Arduino.h>
@@ -36,7 +39,6 @@ extern "C" { void delay(uint32_t msec); }
 #else
 void delay(uint32_t msec);
 #endif
-
 
 class LPS22HB {
 
