@@ -58,7 +58,7 @@ class LPS22HB {
 
         LPS22HB(Rate_t rate);
 
-        bool begin(void);
+        bool begin(uint8_t bus=1);
 
         bool checkNewData(void);
 

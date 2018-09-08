@@ -29,9 +29,9 @@ LPS22HB::LPS22HB(Rate_t rate)
     _rate = rate;
 }
 
-bool LPS22HB::begin(void)
+bool LPS22HB::begin(uint8_t bus)
 {
-    _i2c = cpi2c_open(ADDRESS);
+    _i2c = cpi2c_open(ADDRESS, bus);
 
     if (_i2c <= 0) {
         return false;
