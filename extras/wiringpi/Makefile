@@ -25,7 +25,8 @@ ALL = Basic
 
 LPS22HBSRC = ../../src
 
-I2CINC = $(CPDB)/src
+CPSRC = $(CPDB)/src
+CPEXT  = $(CPDB)/extras
 I2CSRC = $(CPDB)/extras/i2c/wiringpi/src
 
 all: $(ALL)
@@ -34,16 +35,16 @@ Basic: Basic.o LPS22HB.o WiringPiI2C.o main.o
 	g++ -std=c++11 -o Basic Basic.o LPS22HB.o WiringPiI2C.o main.o -lwiringPi
 
 Basic.o: Basic.cpp 
-	g++ -std=c++11 -Wall -I$(I2CINC) -I$(LPS22HBSRC) -c Basic.cpp
+	g++ -std=c++11 -Wall -I$(CPSRC) -I$(LPS22HBSRC) -c Basic.cpp
 
 LPS22HB.o:  $(LPS22HBSRC)/LPS22HB.cpp  $(LPS22HBSRC)/LPS22HB.h
-	g++ -std=c++11 -Wall -I$(I2CINC) -I$(LPS22HBSRC) -c $(LPS22HBSRC)/LPS22HB.cpp
+	g++ -std=c++11 -Wall -I$(CPSRC) -I$(LPS22HBSRC) -c $(LPS22HBSRC)/LPS22HB.cpp
 
 WiringPiI2C.o: $(I2CSRC)/WiringPiI2C.cpp 
-	g++ -std=c++11 -Wall -I$(I2CINC) -c $(I2CSRC)/WiringPiI2C.cpp
+	g++ -std=c++11 -Wall -I$(CPSRC) -c $(I2CSRC)/WiringPiI2C.cpp
 
-main.o: ../main.cpp 
-	g++ -std=c++11 -Wall -c ../main.cpp
+main.o: $(CPEXT)/main.cpp 
+	g++ -std=c++11 -Wall -c $(CPEXT)/main.cpp
 
 run: Basic
 	./Basic
