@@ -1,5 +1,5 @@
 /* 
-   Polling.ino: LPS22HB polling example
+   Interrupt.ino: LPS22HB interrupt-driven example
 
    Copyright (C) 2018 Simon D. Levy
 
@@ -24,12 +24,22 @@
 
 static const uint8_t LED_PIN = 38;
 
+// LPS22H definitions
+static const int8_t INTERRUPT_PIN = A5;
+
 /* Specify sensor parameters (sample rate is twice the bandwidth) 
    Choices are P_1Hz, P_10Hz P_25 Hz, P_50Hz, and P_75Hz
  */
 static LPS22HB::Rate_t ODR = LPS22HB::P_25Hz;     
 
 static LPS22HB lps22hb = LPS22HB(ODR);
+
+static bool gotNewData;
+
+static void interruptHandler()
+{
+    gotNewData = true;
+}
 
 static void error(const char * msg)
 {
@@ -44,6 +54,8 @@ void setup()
 
     pinMode(LED_PIN, OUTPUT);
     digitalWrite(LED_PIN, HIGH); // start with led off
+
+    pinMode(INTERRUPT_PIN, INPUT);
 
     Wire.begin(TWI_PINS_20_21); // set master mode 
     Wire.setClock(400000); // I2C frequency at 400 kHz  
@@ -63,14 +75,22 @@ void setup()
             break;
 
     }
+
+    attachInterrupt(INTERRUPT_PIN, interruptHandler, RISING);  
+
+    // Read from sensor to enable interrupt
+    lps22hb.readPressure();
+    lps22hb.readTemperature();
+
 }
 
 void loop() 
 {
-    if (lps22hb.checkNewData()) { 
+    if (gotNewData) {
+
+        gotNewData = false;
 
         float pressure = lps22hb.readPressure();
-
         float temperature = lps22hb.readTemperature();
 
         Serial.print("Temperature = ");
