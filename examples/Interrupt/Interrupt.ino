@@ -56,6 +56,7 @@ void setup()
     digitalWrite(LED_PIN, HIGH); // start with led off
 
     pinMode(INTERRUPT_PIN, INPUT);
+    attachInterrupt(INTERRUPT_PIN, interruptHandler, RISING);  
 
     Wire.begin(TWI_PINS_20_21); // set master mode 
     Wire.setClock(400000); // I2C frequency at 400 kHz  
@@ -76,9 +77,7 @@ void setup()
 
     }
 
-    attachInterrupt(INTERRUPT_PIN, interruptHandler, RISING);  
-
-    // Read from sensor to enable interrupt
+    // Read from sensor to enable interrupts
     lps22hb.readPressure();
     lps22hb.readTemperature();
 
