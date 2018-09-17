@@ -18,12 +18,11 @@
    GNU General Public License for more details.
    You should have received a copy of the GNU General Public License
    along with LPS22HB.  If not, see <http://www.gnu.org/licenses/>.
- */
+*/
 
 #pragma once
 
 #include <stdint.h>
-#include <stdbool.h>
 
 // One ifdef needed to support delay() cross-platform
 #if defined(ARDUINO)
@@ -32,6 +31,7 @@
 #elif defined(__arm__) 
 #if defined(STM32F303)  || defined(STM32F405xx)
 extern "C" { void delay(uint32_t msec); }
+}
 #else
 #include <wiringPi.h>
 #endif
@@ -40,40 +40,50 @@ extern "C" { void delay(uint32_t msec); }
 void delay(uint32_t msec);
 #endif
 
-class LPS22HB {
-
+class LPS22HB
+{
     public: 
 
-        // Altimeter output data rate
+        static const uint8_t ADDRESS = 0x5C;
+
         typedef enum {
 
-            ODR_1shot, 
-            ODR_1Hz, 
-            ODR_10Hz, 
-            ODR_25Hz, 
-            ODR_50Hz, 
-            ODR_75Hz 
+            P_1shot,  
+            P_1Hz,   
+            P_10Hz,   
+            P_25Hz,  
+            P_50Hz,   
+            P_75Hz   
 
         } Rate_t;
 
-        LPS22HB(Rate_t rate);
+        typedef enum {
 
-        bool begin(uint8_t bus=1);
+            ERROR_NONE,
+            ERROR_CONNECT,
+            ERROR_ID,
+            ERROR_SELFTEST
 
-        bool checkNewData(void);
+        } Error_t;
 
-        float readPressure(void);
+        LPS22HB(Rate_t ODR);
 
-        float readTemperature(void);
+        Error_t begin(uint8_t bus=1);
+
+        bool checkNewData();
+
+        float readPressure();
+
+        float readTemperature();
 
     private:
 
-        // Register map
+        // See LPS22H "MEMS pressure sensor: 260-1260 hPa absolute digital output barometer" Data Sheet
         // http://www.st.com/content/ccc/resource/technical/document/datasheet/bf/c1/4f/23/61/17/44/8a/DM00140895.pdf/files/DM00140895.pdf/jcr:content/translations/en.DM00140895.pdf
         static const uint8_t INTERRUPT_CFG = 0x0B;
         static const uint8_t THS_P_L       = 0x0C;
         static const uint8_t THS_P_H       = 0x0D;
-        static const uint8_t WHO_AM_I      = 0x0F;
+        static const uint8_t WHOAMI        = 0x0F ;
         static const uint8_t CTRL_REG1     = 0x10;
         static const uint8_t CTRL_REG2     = 0x11;
         static const uint8_t CTRL_REG3     = 0x12;
@@ -94,14 +104,13 @@ class LPS22HB {
         static const uint8_t TEMP_OUT_H    = 0x2C;
         static const uint8_t LPFP_RES      = 0x33;
 
-        static const uint8_t ADDRESS = 0x5C;
-        static const uint8_t ID      = 0xB1;
+        Rate_t _odr;
 
-        Rate_t _rate;
-
-        uint8_t _i2c; // cross-platform support
+        // Cross-platform support
+        uint8_t _i2c;
 
         uint8_t readRegister(uint8_t subAddress);
-        void    readRegisters(uint8_t subAddress, uint8_t count, uint8_t * dest);
+
         void    writeRegister(uint8_t subAddress, uint8_t data);
+        void    readRegisters(uint8_t subAddress, uint8_t count, uint8_t * dest);
 };
