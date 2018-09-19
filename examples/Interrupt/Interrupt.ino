@@ -77,10 +77,7 @@ void setup()
 
     }
 
-    // Read from sensor to enable interrupts
-    lps22hb.readPressure();
-    lps22hb.readTemperature();
-
+    lps22hb.clearInterrupt();   // necessary for STM32 sensors
 }
 
 void loop() 

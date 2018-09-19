@@ -69,6 +69,12 @@ LPS22HB::Error_t LPS22HB::begin(uint8_t bus)
     return ERROR_NONE;
 }
 
+void LPS22HB::clearInterrupt(void)
+{
+    readPressure();
+    readTemperature();
+}
+
 uint8_t LPS22HB::readRegister(uint8_t subAddress) {
     uint8_t data;
     readRegisters(subAddress, 1, &data);

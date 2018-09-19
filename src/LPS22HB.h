@@ -70,6 +70,8 @@ class LPS22HB
 
         Error_t begin(uint8_t bus=1);
 
+        void clearInterrupt(void);
+
         bool checkNewData();
 
         float readPressure();
