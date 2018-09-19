@@ -21,13 +21,14 @@
 # Change this to whereever you installed CrossPlatformDataBus
 CPDB = $(HOME)/CrossPlatformDataBus
 
+CPSRC  = $(CPDB)/src
+CPEXT  = $(CPDB)/extras
+CPCMN  = $(CPEXT)/common
+I2CSRC = $(CPEXT)/i2c/i2cdev/src
+
 ALL = Basic
 
 LPS22HBSRC = ../../src
-
-I2CINC = $(CPDB)/src
-I2CSRC = $(CPDB)/extras/i2c/i2cdev/src
-CPCMN =  $(CPDB)/extras/common
 
 all: $(ALL)
 
@@ -35,13 +36,13 @@ Basic: Basic.o LPS22HB.o I2CDevI2C.o main.o timing.o
 	g++ -std=c++11 -o Basic Basic.o LPS22HB.o I2CDevI2C.o main.o timing.o
 
 Basic.o: Basic.cpp 
-	g++ -std=c++11 -Wall -I$(I2CINC) -I$(LPS22HBSRC) -c Basic.cpp
+	g++ -std=c++11 -Wall -I$(CPCMN) -I$(CPSRC) -I$(LPS22HBSRC) -c Basic.cpp
 
 LPS22HB.o:  $(LPS22HBSRC)/LPS22HB.cpp  $(LPS22HBSRC)/LPS22HB.h
-	g++ -std=c++11 -Wall -I$(I2CINC) -I$(LPS22HBSRC) -c $(LPS22HBSRC)/LPS22HB.cpp
+	g++ -std=c++11 -Wall -I$(CPSRC) -I$(LPS22HBSRC) -c $(LPS22HBSRC)/LPS22HB.cpp
 
 I2CDevI2C.o: $(I2CSRC)/I2CDevI2C.cpp 
-	g++ -std=c++11 -Wall -I$(I2CINC) -c $(I2CSRC)/I2CDevI2C.cpp
+	g++ -std=c++11 -Wall -I$(CPSRC) -c $(I2CSRC)/I2CDevI2C.cpp
 
 main.o: $(CPCMN)/main.cpp 
 	g++ -std=c++11 -Wall -c $(CPCMN)/main.cpp

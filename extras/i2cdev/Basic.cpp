@@ -25,14 +25,13 @@
 #include <string.h>
 #include <errno.h>
 
-// in timing.cpp
-uint32_t millis(void);
+#include <timing.h>
 
 // params
-static const  LPS22HB::Rate_t BRATE = LPS22HB::ODR_50Hz;
+static LPS22HB::Rate_t ODR = LPS22HB::P_25Hz;     
 
 // Instantiate LPS22HB class
-static LPS22HB lps22hb(BRATE);
+static LPS22HB lps22hb(ODR);
 
 void setup()
 {
