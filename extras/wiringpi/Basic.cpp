@@ -27,10 +27,10 @@
 #include <errno.h>
 
 // params
-static const  LPS22HB::Rate_t MRATE = LPS22HB::ODR_50Hz;
+static LPS22HB::Rate_t ODR = LPS22HB::P_25Hz;     
 
 // Instantiate LPS22HB class
-static LPS22HB lps22hb(MRATE);
+static LPS22HB lps22hb(ODR);
 
 void setup()
 {
